@@ -3,8 +3,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import morgan from "morgan";
-import connectDB from "./config/db.js";
-import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
+import connectDB from "./config/connectDB.js";
+import { errorHandler, notFound } from "./middleware/errorHandler.js";
 import router from "./router/index.js";
 
 const app = express();
@@ -26,7 +26,7 @@ app.use(express.urlencoded({ extended: true }));
 const port = process.env.PORT || 3000;
 app.get("/", (req, res) => res.json(`Server listening on port ${port}!`));
 
-app.use("/api", router());
+app.use("/api", router);
 app.use(errorHandler);
 app.use(notFound);
 

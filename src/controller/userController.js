@@ -1,6 +1,5 @@
-import bcrypt from "bcryptjs";
+import asyncHandler from "../middleware/asyncHandler.js";
 import User from "../model/userModel.js";
-import asyncHandler from "../utils/asyncHandler.js";
 import generateToken from "../utils/generateToken.js";
 
 // @desc    Register a new user
@@ -15,12 +14,10 @@ const registerUser = asyncHandler(async (req, res) => {
     return res.status(400).json("User already exists");
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
-
   const user = await User.create({
     name,
     email,
-    password: hashedPassword,
+    password,
   });
 
   if (user) {
@@ -44,7 +41,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const user = await User.findOne({ email });
 
-  if (user && (await bcrypt.compare(password, user.password))) {
+  if (user && (await user.matchPassword(password))) {
     generateToken(res, user._id);
 
     return res.json({
@@ -61,11 +58,12 @@ const loginUser = asyncHandler(async (req, res) => {
 // @route   POST /api/users/logout
 // @access  Private
 const logoutUser = (req, res) => {
-  res.cookie("jwt", "", {
+  res.cookie("token", "", {
     httpOnly: true,
     expires: new Date(0),
   });
-  res.status(200).json("Logged out successfully");
+
+  return res.status(200).json("Logged out successfully");
 };
 
 // @desc    Get user profile
@@ -79,7 +77,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
       email: req.user.email,
     });
   } else {
-    return res.status.json(404, "User not found");
+    return res.status(404).json("User not found");
   }
 });
 
@@ -105,7 +103,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       email: updatedUser.email,
     });
   } else {
-    return res.status.json(404, "User not found");
+    return res.status(404).json("User not found");
   }
 });
 
