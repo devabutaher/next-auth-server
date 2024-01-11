@@ -6,7 +6,7 @@ import generateToken from "../utils/generateToken.js";
 // @route   POST /api/users/register
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, role, password } = req.body;
 
   const userExists = await User.findOne({ email });
 
@@ -17,16 +17,18 @@ const registerUser = asyncHandler(async (req, res) => {
   const user = await User.create({
     name,
     email,
+    role,
     password,
   });
 
   if (user) {
-    generateToken(res, user._id);
+    generateToken(res, user);
 
     return res.status(201).json({
       _id: user._id,
       name: user.name,
       email: user.email,
+      role: user.role,
     });
   } else {
     return res.status(400).json("Invalid user data");
@@ -42,12 +44,11 @@ const loginUser = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email });
 
   if (user && (await user.matchPassword(password))) {
-    generateToken(res, user._id);
-
     return res.json({
       _id: user._id,
       name: user.name,
       email: user.email,
+      role: user.role,
     });
   } else {
     return res.status(401).json("Invalid email or password");
@@ -58,7 +59,7 @@ const loginUser = asyncHandler(async (req, res) => {
 // @route   POST /api/users/logout
 // @access  Private
 const logoutUser = (req, res) => {
-  res.cookie("token", "", {
+  res.cookie("auth-token", "", {
     httpOnly: true,
     expires: new Date(0),
   });
@@ -75,6 +76,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
       _id: req.user._id,
       name: req.user.name,
       email: req.user.email,
+      role: req.user.role,
     });
   } else {
     return res.status(404).json("User not found");
@@ -101,6 +103,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       _id: updatedUser._id,
       name: updatedUser.name,
       email: updatedUser.email,
+      role: updateUserProfile.role,
     });
   } else {
     return res.status(404).json("User not found");
