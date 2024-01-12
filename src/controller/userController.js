@@ -17,6 +17,7 @@ const registerUser = asyncHandler(async (req, res) => {
   const user = await User.create({
     name,
     email,
+    image: "",
     role,
     password,
   });
@@ -28,6 +29,7 @@ const registerUser = asyncHandler(async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      image: user.image,
       role: user.role,
     });
   } else {
@@ -48,10 +50,45 @@ const loginUser = asyncHandler(async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      image: user.image,
       role: user.role,
     });
   } else {
     return res.status(401).json("Invalid email or password");
+  }
+});
+
+// @desc    Save a new user
+// @route   POST /api/users/save
+// @access  Public
+const saveUser = asyncHandler(async (req, res) => {
+  const { name, email, role, image } = req.body;
+
+  const userExists = await User.findOne({ email });
+
+  if (userExists) {
+    return;
+  }
+
+  const user = await User.create({
+    name,
+    email,
+    image,
+    role,
+  });
+
+  if (user) {
+    generateToken(res, user);
+
+    return res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      image: user.image,
+      role: user.role,
+    });
+  } else {
+    return res.status(400).json("Invalid user data");
   }
 });
 
@@ -76,6 +113,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
       _id: req.user._id,
       name: req.user.name,
       email: req.user.email,
+      image: req.image,
       role: req.user.role,
     });
   } else {
@@ -103,7 +141,8 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       _id: updatedUser._id,
       name: updatedUser.name,
       email: updatedUser.email,
-      role: updateUserProfile.role,
+      image: updatedUser.image,
+      role: updatedUser.role,
     });
   } else {
     return res.status(404).json("User not found");
@@ -115,5 +154,6 @@ export {
   loginUser,
   logoutUser,
   registerUser,
+  saveUser,
   updateUserProfile,
 };
